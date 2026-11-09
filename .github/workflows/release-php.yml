@@ -1,0 +1,40 @@
+name: Release PHP application
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "php/**"
+      - ".github/workflows/release-php.yml"
+
+jobs:
+  release:
+    name: Create PHP release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs['php--release_created'] }}
+      version: ${{ steps.release.outputs['php--version'] }}
+    steps:
+      - name: Create or update PHP release pull request
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: php/release-please-config.json
+          manifest-file: php/.release-please-manifest.json
+
+  build:
+    name: Build and publish PHP release image
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    uses: ./.github/workflows/build-and-publish-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      build_context: ./php
+      image_name: devops-sample-apps-php
+      release_version: ${{ needs.release.outputs.version }}
