@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Create or update PHP release pull request
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v5
         with:
           config-file: php/release-please-config.json
           manifest-file: php/.release-please-manifest.json
