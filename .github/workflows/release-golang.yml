@@ -1,0 +1,40 @@
+name: Release Go application
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "golang/**"
+      - ".github/workflows/release-golang.yml"
+
+jobs:
+  release:
+    name: Create Go release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs['golang--release_created'] }}
+      version: ${{ steps.release.outputs['golang--version'] }}
+    steps:
+      - name: Create or update Go release pull request
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: golang/release-please-config.json
+          manifest-file: golang/.release-please-manifest.json
+
+  build:
+    name: Build and publish Go release image
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    uses: ./.github/workflows/build-and-publish-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      build_context: ./golang
+      image_name: devops-sample-apps-golang
+      release_version: ${{ needs.release.outputs.version }}
